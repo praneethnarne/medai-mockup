@@ -51,8 +51,9 @@ export default function Detect() {
     <Layout>
       <h1 className="text-2xl font-bold tracking-tight">New scan</h1>
       <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted">
-        Upload a close, well-lit photograph of a single lesion. Dermatoscopic images
-        give the best result, but a clear phone photo works for this demo.
+        Upload a close, well-lit photo of one spot on the skin — a mole, a mark or a
+        patch. Magnified clinical photos work best, but any clear phone photo is fine
+        for this demo.
       </p>
 
       <div

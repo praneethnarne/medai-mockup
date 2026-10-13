@@ -82,21 +82,29 @@ export default function Result() {
       ) : (
         <section className="mb-6 rounded-xl border border-line bg-surface p-5 sm:p-6">
           <p className="mb-2 font-mono text-xs tracking-wide text-muted">
-            MOST LIKELY CATEGORY
+            WHAT THIS LOOKS LIKE
           </p>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{condition.name}</h1>
-              <p className="mt-1.5 font-mono text-sm text-muted">
-                {condition.code} · {condition.malignant ? "malignant / pre-cancerous" : "benign"}
+              <p className="mt-2 max-w-md text-base leading-relaxed">
+                {condition.plain}
+              </p>
+              <p className="mt-2 font-mono text-xs text-muted">
+                {condition.code} ·{" "}
+                {condition.malignant ? "the kind a doctor should see" : "the harmless kind"}
               </p>
             </div>
             <div className="text-end">
               <p className="font-mono text-3xl font-medium tabular-nums">{pct}%</p>
-              <p className="mt-1 text-xs text-muted">confidence</p>
+              <p className="mt-1 text-xs text-muted">how sure it is</p>
             </div>
           </div>
-          <p className="mt-4 max-w-prose border-t border-line pt-4 text-sm leading-relaxed text-muted">
+          <p className="mt-4 border-t border-line pt-4 text-xs leading-relaxed text-muted">
+            "{pct}% sure" means the system rated this category well ahead of the other
+            six. It does not mean there is a {pct}% chance you have it.
+          </p>
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
             {condition.whatItIs}
           </p>
         </section>
@@ -118,10 +126,10 @@ export default function Result() {
         <CareGuidance code={result.predicted} />
 
         <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
-          <h2 className="mb-1 text-base font-semibold">All categories</h2>
+          <h2 className="mb-1 text-base font-semibold">What else it considered</h2>
           <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">
-            The model scores every category. A close second place is a reason for
-            caution, not a detail to ignore.
+            The system scores all seven types and picks the highest. If second place is
+            close behind, that is worth paying attention to rather than ignoring.
           </p>
           <ProbabilityBars
             probabilities={result.probabilities}
@@ -129,17 +137,17 @@ export default function Result() {
           />
           <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-4 text-xs">
             <div>
-              <dt className="text-muted">Model</dt>
+              <dt className="text-muted">Model used</dt>
               <dd className="mt-0.5 font-mono">{result.model}</dd>
             </div>
             {result.inferenceMs && (
               <div>
-                <dt className="text-muted">Inference time</dt>
+                <dt className="text-muted">Time to decide</dt>
                 <dd className="mt-0.5 font-mono">{result.inferenceMs} ms</dd>
               </div>
             )}
             <div>
-              <dt className="text-muted">Scan ID</dt>
+              <dt className="text-muted">Scan reference</dt>
               <dd className="mt-0.5 font-mono">{result.id}</dd>
             </div>
           </dl>

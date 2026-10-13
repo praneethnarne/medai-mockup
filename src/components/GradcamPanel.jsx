@@ -23,13 +23,14 @@ export default function GradcamPanel({ imageUrl, focus }) {
   return (
     <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
       <header className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="text-base font-semibold">Visual explanation</h2>
+        <h2 className="text-base font-semibold">Where the system was looking</h2>
         <span className="font-mono text-xs text-muted">Grad-CAM</span>
       </header>
       <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">
-        Warmer regions are the parts of the image that most influenced the
-        prediction. If the warm area sits away from the lesion, treat the
-        prediction with suspicion — the model may be reading the wrong thing.
+        The coloured patch marks the part of the photo the system based its answer
+        on. Red is where it paid most attention. If the red sits on the spot, it
+        looked at the right thing — if it sits on plain skin or on a hair, the
+        answer should not be trusted. Most systems cannot show you this at all.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -58,7 +59,7 @@ export default function GradcamPanel({ imageUrl, focus }) {
             />
           </div>
           <figcaption className="mt-2 text-xs text-muted">
-            Attention overlay — illustrative placeholder, not a real heatmap
+            Where it looked — illustration only, not yet a real heatmap
           </figcaption>
         </figure>
       </div>

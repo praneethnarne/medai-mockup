@@ -45,10 +45,10 @@ export default function Landing() {
             Know what the model saw, and know what to do about it.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            MEdAI classifies a dermatoscopic image into one of seven lesion
-            categories, shows the regions behind its prediction, and turns that
-            result into concrete next steps. It is a screening aid that is honest
-            about its uncertainty.
+            Photograph a mole or a mark on your skin. MEdAI tells you which of seven
+            common types it most resembles, shows you which part of the photo it
+            based that on, and tells you what to do about it — including when the
+            honest answer is that it does not know.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -67,7 +67,124 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="border-y border-line bg-surface">
+
+        <section className="border-t border-line bg-surface">
+          <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+            <h2 className="text-2xl font-bold tracking-tight">
+              First, what is a skin lesion?
+            </h2>
+            <div className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
+              <p>
+                It is any spot, mole or patch on your skin that looks different from the
+                skin around it. A mole is one. A freckle is one. A dry, scaly patch is
+                one.
+              </p>
+              <p className="mt-3">
+                It is <strong className="font-semibold text-ink">not</strong> a cut, a
+                wound or a rash. Nothing here is about injuries.
+              </p>
+              <p className="mt-3">
+                Almost all of these spots are harmless. A few are not. The job is telling
+                which is which.
+              </p>
+            </div>
+
+            <h3 className="mt-10 text-lg font-semibold">
+              Step one: you notice a spot
+            </h3>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
+              Both of these are on a forearm. One is nothing to worry about. The other
+              needs a doctor.
+            </p>
+            <div className="mt-5 grid gap-6 sm:grid-cols-2">
+              <figure className="m-0">
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <img
+                    src="/samples/arm_nevus.jpg"
+                    alt="A forearm with a small, round, evenly coloured brown mole"
+                    className="block aspect-square w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-3">
+                  <span className="font-semibold">An ordinary mole</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted">
+                    Round, one even shade of brown, smooth edge.
+                  </span>
+                </figcaption>
+              </figure>
+              <figure className="m-0">
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <img
+                    src="/samples/arm_melanoma.jpg"
+                    alt="A forearm with a large lopsided mole in several shades of brown and black with a ragged edge"
+                    className="block aspect-square w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-3">
+                  <span className="font-semibold">One to get checked</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted">
+                    Lopsided, several shades, ragged edge.
+                  </span>
+                </figcaption>
+              </figure>
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Illustrations, drawn to show the difference clearly.
+            </p>
+
+            <h3 className="mt-12 text-lg font-semibold">
+              Step two: what the system actually looks at
+            </h3>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
+              Doctors photograph the spot through a dermatoscope — a magnifier with a
+              light held against the skin. These are real clinical images from the public
+              ISIC Archive, the same source as the data this project trains on.
+            </p>
+            <div className="mt-5 grid gap-6 sm:grid-cols-2">
+              <figure className="m-0">
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <img
+                    src="/samples/real_nevus.jpg"
+                    alt="Magnified clinical photograph of a benign mole"
+                    className="block aspect-[4/3] w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-3">
+                  <span className="font-semibold">Harmless mole</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted">
+                    Even pattern, fading evenly outwards.
+                  </span>
+                </figcaption>
+              </figure>
+              <figure className="m-0">
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <img
+                    src="/samples/real_melanoma.jpg"
+                    alt="Magnified clinical photograph of a melanoma"
+                    className="block aspect-[4/3] w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-3">
+                  <span className="font-semibold">Melanoma</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted">
+                    Patchy and uneven, with colour that stops and starts.
+                  </span>
+                </figcaption>
+              </figure>
+            </div>
+
+            <p className="mt-6 max-w-2xl rounded-lg border border-line bg-ground p-4 text-sm leading-relaxed text-muted">
+              <strong className="font-semibold text-ink">
+                Notice how much harder the second pair is.
+              </strong>{" "}
+              In real clinical images the difference between harmless and dangerous is
+              subtle, and specialists disagree with each other regularly. That difficulty
+              is the reason this project is worth building.
+            </p>
+          </div>
+        </section>
+
+        <section className="border-b border-line bg-surface">
           <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6 sm:py-14">
             {contributions.map((item, i) => (
               <article key={item.title}>

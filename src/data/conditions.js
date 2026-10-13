@@ -8,20 +8,20 @@
 //    presented as conditional, not as a verdict.
 
 export const DISCLAIMER =
-  "MEdAI is a screening aid, not a diagnosis. Only a qualified clinician can diagnose a skin condition.";
+  "MEdAI is a first check, not a diagnosis. Only a qualified doctor can actually diagnose a skin condition.";
 
 export const TRIAGE = {
   urgent: {
-    label: "See a dermatologist urgently",
-    note: "Potentially serious. Do not wait for it to change.",
+    label: "See a skin doctor urgently",
+    note: "This could be serious. Do not wait to see if it changes.",
   },
   prompt: {
-    label: "Book a dermatologist appointment",
-    note: "Needs professional assessment, but it is not an emergency.",
+    label: "Book a skin doctor appointment",
+    note: "A doctor needs to look at it, but it is not an emergency.",
   },
   routine: {
     label: "Monitor and mention at your next visit",
-    note: "Commonly benign. Keep an eye on it for change.",
+    note: "Usually harmless. Just keep an eye on it.",
   },
 };
 
@@ -37,16 +37,18 @@ export const CONDITIONS = {
   mel: {
     code: "mel",
     name: "Melanoma",
+    plain:
+      "A dangerous kind of mole. This is the one that must not be ignored.",
     triage: "urgent",
     malignant: true,
     whatItIs:
-      "Melanoma is a cancer of the pigment-producing cells in the skin. It is the most serious form of skin cancer, and outcomes are strongly better the earlier it is treated.",
+      "Melanoma is a cancer that starts in the cells which give skin its colour. It is the most serious skin cancer, but when it is caught early it is usually very treatable. That is why speed matters here.",
     seekCare:
       "Arrange a dermatologist or skin-cancer clinic appointment as soon as you can — within days, not months. If your health system has an urgent skin-lesion pathway, this is what it is for.",
     selfCare: [
-      "Do not scratch, pick, shave over or attempt to remove the lesion",
+      "Do not scratch, pick, shave over or try to remove the spot",
       "Photograph it next to a ruler or coin so the clinician can see its size",
-      "Keep it covered from the sun and avoid sunbeds entirely",
+      "Keep it covered from the sun, and avoid sunbeds completely",
       "Write down when you first noticed it and what has changed since",
     ],
     redFlags: UNIVERSAL_RED_FLAGS,
@@ -54,12 +56,14 @@ export const CONDITIONS = {
   bcc: {
     code: "bcc",
     name: "Basal Cell Carcinoma",
+    plain:
+      "The most common skin cancer. It grows slowly and almost never spreads, but a doctor does need to remove it.",
     triage: "prompt",
     malignant: true,
     whatItIs:
-      "Basal cell carcinoma is the most common form of skin cancer. It grows slowly and very rarely spreads elsewhere in the body, but it does need medical treatment to be removed.",
+      "Basal cell carcinoma is the most common skin cancer. It grows slowly and almost never spreads to the rest of the body, but it will not go away on its own and needs a doctor to treat it.",
     seekCare:
-      "Book a dermatologist appointment in the next few weeks. Treatment is usually straightforward, and earlier treatment means a smaller procedure.",
+      "Book a skin doctor appointment in the next few weeks. Treatment is usually straightforward, and earlier treatment means a smaller procedure.",
     selfCare: [
       "Leave the area alone — do not pick at any crust or scab",
       "Keep it clean and dry, and protect it from sun exposure",
@@ -71,10 +75,12 @@ export const CONDITIONS = {
   akiec: {
     code: "akiec",
     name: "Actinic Keratosis / Intraepithelial Carcinoma",
+    plain:
+      "A rough, sun-damaged patch. Not cancer yet, but it can turn into cancer if it is left alone.",
     triage: "prompt",
     malignant: true,
     whatItIs:
-      "These are rough, sun-damaged patches of skin. They are considered pre-cancerous: a proportion can progress to squamous cell carcinoma if left untreated.",
+      "These are dry, rough patches caused by years of sun on the skin. They are not cancer, but a small number of them turn into cancer over time, so doctors treat them early while it is simple.",
     seekCare:
       "Book a dermatologist or GP appointment in the next few weeks. These are very treatable at this stage, which is the reason to act now.",
     selfCare: [
@@ -91,10 +97,12 @@ export const CONDITIONS = {
   bkl: {
     code: "bkl",
     name: "Benign Keratosis",
+    plain:
+      "A harmless age-and-sun spot. Very common, and it never turns into cancer.",
     triage: "routine",
     malignant: false,
     whatItIs:
-      "Benign keratoses — including seborrhoeic keratoses and solar lentigines — are harmless growths that become more common with age and sun exposure. They do not turn into cancer.",
+      "These are harmless spots that build up with age and sun exposure. People often mistake them for something serious because they can look dark and crusty, but they never turn into cancer.",
     seekCare:
       "No urgent action needed. Mention it at your next routine appointment, particularly if it bothers you cosmetically or catches on clothing.",
     selfCare: [
@@ -108,10 +116,12 @@ export const CONDITIONS = {
   nv: {
     code: "nv",
     name: "Melanocytic Nevus",
+    plain:
+      "An ordinary mole. Most adults have twenty or thirty of them.",
     triage: "routine",
     malignant: false,
     whatItIs:
-      "A melanocytic nevus is an ordinary mole — a benign cluster of pigment cells. Most adults have between ten and forty of them, and the large majority never cause any problem.",
+      "This is an ordinary mole: a small cluster of the cells that give skin its colour. Nearly everyone has them, and the vast majority never cause any trouble.",
     seekCare:
       "No action needed now. Have it looked at if it starts to change, and mention it at a routine skin check if you have many moles or a family history of melanoma.",
     selfCare: [
@@ -125,10 +135,12 @@ export const CONDITIONS = {
   df: {
     code: "df",
     name: "Dermatofibroma",
+    plain:
+      "A harmless little lump under the skin, often left behind by an old insect bite or scratch.",
     triage: "routine",
     malignant: false,
     whatItIs:
-      "A dermatofibroma is a firm, benign nodule of fibrous tissue in the skin, often appearing after a minor injury such as an insect bite. It is harmless and usually persists unchanged for years.",
+      "A dermatofibroma is a small, firm lump in the skin, usually left behind after a minor injury like an insect bite. It is harmless and tends to stay exactly as it is for years.",
     seekCare:
       "No urgent action needed. Mention it at a routine appointment if it is painful, catches on clothing, or you are unsure it has always looked this way.",
     selfCare: [
@@ -142,10 +154,12 @@ export const CONDITIONS = {
   vasc: {
     code: "vasc",
     name: "Vascular Lesion",
+    plain:
+      "A harmless red spot made of tiny blood vessels bunched together.",
     triage: "routine",
     malignant: false,
     whatItIs:
-      "Vascular lesions — such as angiomas, cherry angiomas and pyogenic granulomas — are benign collections of small blood vessels. They are very common and not a form of cancer.",
+      "This is a cluster of tiny blood vessels sitting close to the surface of the skin, which is what makes it look bright red. It is very common and it is not a cancer.",
     seekCare:
       "No urgent action needed. See a clinician if it bleeds repeatedly, grows quickly, or is in a position where it keeps getting knocked.",
     selfCare: [
