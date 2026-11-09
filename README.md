@@ -1,7 +1,8 @@
 # MEdAI — interface mockup
 
-**This is a UI mockup with simulated inference. No trained model is connected, and
-every prediction shown is generated, not measured.** It exists to show what the MEdAI
+**Connect it to the MEdAI model server and every result comes from the trained model.
+With no server connected it falls back to simulated results, and every screen says so
+("DEMO DATA" versus "LIVE MODEL").** It exists to show what the MEdAI
 system will look like and how it will behave. The real system is built separately.
 
 MEdAI is a final-year project at MLR Institute of Technology: explainable AI for
@@ -16,6 +17,23 @@ result into practical next steps.
 | **Explainable prediction** | Grad-CAM panel with an opacity slider, so you can see whether the model looked at the lesion or at something irrelevant. The overlay here is an illustrative placeholder — the real heatmap needs the trained model. |
 | **Honest uncertainty** | Below 60% confidence the result leads with "not reliable enough to act on" rather than presenting a label. Toggle it on the scan page to see this path. |
 | **Care guidance** | The feature that distinguishes MEdAI from the systems it builds on: a triage tier, steps for the wait, and the specific changes that mean you should be seen sooner. |
+
+## Connecting the real model
+
+1. Start the model server from the `praneethnarne/medai` repo, either on this computer:
+
+   ```bash
+   python backend/src/demo/app.py --run pad_ft_effb0_phoneaug
+   ```
+
+   or in the Colab notebook (add `--share`), which prints a `https://….gradio.live` link.
+2. Run this interface (below), open **New scan**, paste the server address
+   (`http://127.0.0.1:7860` or the gradio.live link) into **Model server**, and press
+   **Connect**. The badge turns to **CONNECTED — real model**.
+
+The address can also be given as `?api=<address>` on any page. It is remembered in
+this browser only. The interface calls the server's `/predict_json` endpoint; see
+`src/lib/predict.js`.
 
 ## Running it
 
@@ -35,9 +53,8 @@ stored, and the forms simply continue.
 
 ## Where the seam is
 
-`src/lib/mockPredict.js` is the only file that fabricates anything. It returns the exact
-shape the real `POST /predict` will return, so swapping to a live backend is a change to
-that one module.
+`src/lib/predict.js` decides: with a server configured it calls the trained model;
+without one it uses `src/lib/mockPredict.js`, the only file that fabricates anything.
 
 Care guidance content lives in `src/data/conditions.js`, one entry per class, written
 under deliberate constraints: no drug names, no dosages, no prescriptive treatment, and

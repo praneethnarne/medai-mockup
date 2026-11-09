@@ -1,6 +1,6 @@
 import { CONDITIONS } from "../data/conditions.js";
 
-export default function ProbabilityBars({ probabilities, predicted }) {
+export default function ProbabilityBars({ probabilities, predicted, names }) {
   const rows = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
 
   return (
@@ -34,7 +34,7 @@ export default function ProbabilityBars({ probabilities, predicted }) {
               {(value * 100).toFixed(1)}
             </span>
             <span className="hidden w-44 shrink-0 truncate text-xs text-muted sm:block">
-              {CONDITIONS[code]?.name}
+              {names?.[code] ?? CONDITIONS[code]?.name}
             </span>
           </li>
         );

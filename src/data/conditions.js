@@ -1,4 +1,5 @@
-// Care guidance keyed to the seven HAM10000 lesion classes.
+// Care guidance keyed to the eight lesion types the model predicts (the seven HAM10000
+// classes, with squamous cell carcinoma split out of "akiec" as ISIC's taxonomy does).
 //
 // Content rules (deliberate, do not relax):
 //  - No drug names, no dosages, no prescriptive treatment.
@@ -72,9 +73,28 @@ export const CONDITIONS = {
     ],
     redFlags: UNIVERSAL_RED_FLAGS,
   },
+  scc: {
+    code: "scc",
+    name: "Squamous Cell Carcinoma",
+    plain:
+      "A common skin cancer that grows on sun-exposed skin. It needs to be seen by a doctor soon.",
+    triage: "urgent",
+    malignant: true,
+    whatItIs:
+      "Squamous cell carcinoma is a skin cancer that usually appears as a scaly, crusted or raised patch on skin that gets a lot of sun. Most are cured when treated early, but unlike basal cell carcinoma it can occasionally spread, so it should not be left.",
+    seekCare:
+      "Arrange a dermatologist or skin-cancer clinic appointment as soon as you can — within days to two weeks.",
+    selfCare: [
+      "Do not pick at or try to remove any crust or scab",
+      "Keep it clean and covered from the sun",
+      "Photograph it next to a ruler or coin so the clinician can see its size",
+      "Note whether it has grown, bled or become tender",
+    ],
+    redFlags: UNIVERSAL_RED_FLAGS,
+  },
   akiec: {
     code: "akiec",
-    name: "Actinic Keratosis / Intraepithelial Carcinoma",
+    name: "Actinic Keratosis",
     plain:
       "A rough, sun-damaged patch. Not cancer yet, but it can turn into cancer if it is left alone.",
     triage: "prompt",
@@ -175,4 +195,4 @@ export const CONDITIONS = {
   },
 };
 
-export const CLASS_ORDER = ["akiec", "bcc", "bkl", "df", "mel", "nv", "vasc"];
+export const CLASS_ORDER = ["akiec", "bcc", "bkl", "df", "mel", "nv", "scc", "vasc"];

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo.jsx";
 import Disclaimer from "../components/Disclaimer.jsx";
+import FooterNote from "../components/FooterNote.jsx";
 import DemoBadge from "../components/DemoBadge.jsx";
 
 const contributions = [
@@ -45,7 +46,7 @@ export default function Landing() {
             Know what the model saw, and know what to do about it.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            Photograph a mole or a mark on your skin. MEdAI tells you which of seven
+            Photograph a mole or a mark on your skin. MEdAI tells you which of eight
             common types it most resembles, shows you which part of the photo it
             based that on, and tells you what to do about it — including when the
             honest answer is that it does not know.
@@ -205,8 +206,7 @@ export default function Landing() {
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-6 text-xs leading-relaxed text-muted sm:px-6">
-          Final-year project, MLR Institute of Technology. Interface mockup with
-          simulated inference; no trained model is connected.
+          <FooterNote />
         </div>
       </footer>
     </div>

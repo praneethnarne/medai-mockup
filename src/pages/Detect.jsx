@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import Disclaimer from "../components/Disclaimer.jsx";
 import AnalysingState from "../components/AnalysingState.jsx";
-import { PIPELINE_STAGES, runPrediction } from "../lib/mockPredict.js";
+import { PIPELINE_STAGES } from "../lib/mockPredict.js";
+import { checkServer, runPrediction, setServerUrl } from "../lib/predict.js";
+import useServerUrl from "../lib/useLive.js";
 import { saveScan } from "../lib/history.js";
 
 export default function Detect() {
@@ -15,6 +17,22 @@ export default function Detect() {
   const [stageIndex, setStageIndex] = useState(-1);
   const [forceLow, setForceLow] = useState(false);
   const [error, setError] = useState(null);
+  const serverUrl = useServerUrl();
+  const [draftUrl, setDraftUrl] = useState(serverUrl);
+  const [serverState, setServerState] = useState(serverUrl ? "checking" : "none");
+
+  useEffect(() => {
+    let alive = true;
+    if (!serverUrl) {
+      setServerState("none");
+      return undefined;
+    }
+    setServerState("checking");
+    checkServer(serverUrl).then((ok) => alive && setServerState(ok ? "ok" : "down"));
+    return () => {
+      alive = false;
+    };
+  }, [serverUrl]);
 
   function accept(next) {
     if (!next) return;
@@ -29,14 +47,26 @@ export default function Detect() {
 
   async function analyse() {
     if (!file) return;
+    setError(null);
+    // The real request runs while the stages play; the last stage waits for it.
+    const request = runPrediction(file, { forceLowConfidence: forceLow });
+    request.catch(() => {});
     for (let i = 0; i < PIPELINE_STAGES.length; i += 1) {
       setStageIndex(i);
-      await new Promise((r) => setTimeout(r, PIPELINE_STAGES[i].ms));
+      await new Promise((r) => setTimeout(r, serverUrl ? 350 : PIPELINE_STAGES[i].ms));
     }
-    const result = await runPrediction(file, { forceLowConfidence: forceLow });
-    result.imageUrl = imageUrl;
-    saveScan(result);
-    navigate(`/result/${result.id}`, { state: { result } });
+    try {
+      const result = await request;
+      result.imageUrl = imageUrl;
+      saveScan(result);
+      navigate(`/result/${result.id}`, { state: { result } });
+    } catch (e) {
+      setStageIndex(-1);
+      setError(
+        `The model server did not answer (${e?.message ?? "unknown error"}). Check the ` +
+          "server address below, or clear it to use the simulation.",
+      );
+    }
   }
 
   if (stageIndex >= 0) {
@@ -144,16 +174,85 @@ export default function Detect() {
           Analyse image
         </button>
 
-        <label className="flex min-h-11 items-center gap-2 text-sm text-muted">
-          <input
-            type="checkbox"
-            checked={forceLow}
-            onChange={(e) => setForceLow(e.target.checked)}
-            className="size-4 accent-[#0e7c7b]"
-          />
-          Demo: force a low-confidence result
-        </label>
+        {!serverUrl && (
+          <label className="flex min-h-11 items-center gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              checked={forceLow}
+              onChange={(e) => setForceLow(e.target.checked)}
+              className="size-4 accent-[#0e7c7b]"
+            />
+            Demo: force a low-confidence result
+          </label>
+        )}
       </div>
+
+      <section className="mt-8 rounded-xl border border-line bg-surface p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-sm font-semibold">Model server</h2>
+          <span
+            className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium ${
+              {
+                ok: "bg-accent-wash text-accent-dark",
+                checking: "bg-routine-wash text-routine",
+                down: "bg-urgent-wash text-urgent",
+                none: "bg-prompt-wash text-prompt",
+              }[serverState]
+            }`}
+          >
+            {
+              {
+                ok: "CONNECTED — real model",
+                checking: "CHECKING…",
+                down: "NOT REACHABLE",
+                none: "NONE — simulated results",
+              }[serverState]
+            }
+          </span>
+        </div>
+        <p className="mt-1.5 max-w-prose text-xs leading-relaxed text-muted">
+          Paste the address the MEdAI notebook prints (a <span className="font-mono">gradio.live</span>{" "}
+          link), or <span className="font-mono">http://127.0.0.1:7860</span> when the model runs on
+          this computer. Leave it empty to use simulated results.
+        </p>
+        <form
+          className="mt-3 flex flex-wrap gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setServerUrl(draftUrl);
+          }}
+        >
+          <input
+            type="text"
+            inputMode="url"
+            autoCapitalize="off"
+            spellCheck={false}
+            value={draftUrl}
+            onChange={(e) => setDraftUrl(e.target.value)}
+            placeholder="https://xxxx.gradio.live"
+            className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-ground px-3 font-mono text-sm"
+            aria-label="Model server address"
+          />
+          <button
+            type="submit"
+            className="min-h-11 rounded-md border border-line px-4 text-sm font-medium transition-colors hover:bg-ground"
+          >
+            Connect
+          </button>
+          {serverUrl && (
+            <button
+              type="button"
+              onClick={() => {
+                setDraftUrl("");
+                setServerUrl("");
+              }}
+              className="min-h-11 rounded-md px-3 text-sm text-muted underline"
+            >
+              Use simulation
+            </button>
+          )}
+        </form>
+      </section>
 
       <Disclaimer className="mt-8" />
     </Layout>

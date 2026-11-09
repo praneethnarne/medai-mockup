@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import Logo from "./Logo.jsx";
 import DemoBadge from "./DemoBadge.jsx";
+import FooterNote from "./FooterNote.jsx";
 
 const navItems = [
   { to: "/dashboard", label: "History" },
@@ -50,8 +51,7 @@ export default function Layout({ children, wide = false }) {
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-5 text-xs leading-relaxed text-muted sm:px-6">
-          MEdAI — final-year project, MLR Institute of Technology. Interface mockup with
-          simulated inference; no trained model is connected.
+          <FooterNote />
         </div>
       </footer>
     </div>

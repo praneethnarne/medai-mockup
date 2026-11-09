@@ -2,6 +2,14 @@
 // session. No backend, nothing persisted beyond the tab.
 
 import { CONDITIONS } from "../data/conditions.js";
+import { GROUPS } from "../data/groups.js";
+
+function nameOf(row) {
+  if (row.status === "unfamiliar") return "Image not recognised";
+  if (row.kind && row.kind !== "spot_growth") return GROUPS[row.kind]?.name ?? row.kind;
+  if (row.status === "unsure") return "Not confident — see a doctor";
+  return CONDITIONS[row.predicted]?.name ?? row.predicted ?? "—";
+}
 
 const KEY = "medai.demo.history";
 
@@ -41,8 +49,13 @@ export function readHistory() {
   }
   return [...session, ...SEEDED].map((row) => ({
     ...row,
-    name: CONDITIONS[row.predicted]?.name ?? row.predicted,
-    triage: CONDITIONS[row.predicted]?.triage ?? "routine",
+    name: nameOf(row),
+    triage:
+      row.status === "answer" || !row.status
+        ? (row.kind && row.kind !== "spot_growth"
+            ? GROUPS[row.kind]?.triage
+            : CONDITIONS[row.predicted]?.triage) ?? "routine"
+        : "prompt",
   }));
 }
 
@@ -53,6 +66,8 @@ export function saveScan(result) {
       id: result.id,
       predicted: result.predicted,
       confidence: result.confidence,
+      status: result.status,
+      kind: result.kind?.top ?? null,
       createdAt: result.createdAt,
       region: "This session",
     };
