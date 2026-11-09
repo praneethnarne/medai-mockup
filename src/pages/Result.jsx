@@ -3,14 +3,14 @@ import Layout from "../components/Layout.jsx";
 import GradcamPanel from "../components/GradcamPanel.jsx";
 import CareGuidance from "../components/CareGuidance.jsx";
 import ProbabilityBars from "../components/ProbabilityBars.jsx";
-import DemoBadge from "../components/DemoBadge.jsx";
-import TriageBadge from "../components/TriageBadge.jsx";
+import Section, { More } from "../components/Section.jsx";
 import { CONDITIONS, DISCLAIMER } from "../data/conditions.js";
 import { EMERGENCY, GROUPS } from "../data/groups.js";
 import { LOW_CONFIDENCE_THRESHOLD } from "../lib/mockPredict.js";
 import { readHistory, readScan } from "../lib/history.js";
 
 const pct = (v) => `${(v * 100).toFixed(1)}%`;
+const whole = (v) => `${Math.round(v * 100)}%`;
 
 function fromSeededRow(id) {
   const row = readHistory().find((r) => r.id === id);
@@ -35,50 +35,78 @@ function statusOf(r) {
   return r.lowConfidence ? "unsure" : "answer";
 }
 
-function TriageCard({ triage }) {
-  const rows = [
-    ["malignant", "Malignant — the kind a doctor must see", "bg-urgent"],
-    ["indeterminate", "Pre-cancerous — should be checked", "bg-prompt"],
-    ["benign", "Benign — usually harmless", "bg-accent"],
-  ];
+// The score as a bar, with a tick where the model's answer threshold sits:
+// shows at a glance why it answered (or did not) without a paragraph.
+function ConfidenceMeter({ value, threshold }) {
+  const passed = value >= threshold;
   return (
-    <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
-      <h2 className="mb-1 text-base font-semibold">How worrying it looks</h2>
-      <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">
-        The eight types grouped by what they mean for you. The advice below follows the
-        most likely type.
+    <div className="w-full">
+      <div className="flex items-baseline gap-2">
+        <span className="font-mono text-3xl font-medium tabular-nums">{whole(value)}</span>
+        <span className="text-sm text-muted">match score</span>
+      </div>
+      <div className="relative mt-2 h-2.5 rounded-full bg-routine-wash">
+        <span
+          className={`absolute inset-y-0 left-0 rounded-full ${passed ? "bg-accent" : "bg-urgent"}`}
+          style={{ width: `${Math.max(value * 100, 2)}%` }}
+        />
+        <span
+          aria-hidden="true"
+          className="absolute -top-1 h-4.5 w-0.5 rounded bg-ink"
+          style={{ left: `${threshold * 100}%` }}
+        />
+      </div>
+      <p className="mt-1.5 text-xs text-muted">
+        Answers only above {whole(threshold)}
       </p>
-      <ul className="flex flex-col gap-3">
-        {rows.map(([key, label, bar]) => {
-          const v = triage[key] ?? 0;
-          return (
-            <li key={key} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="w-full text-sm sm:w-72 sm:shrink-0">{label}</span>
-              <span className="block h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-routine-wash">
-                <span
-                  className={`block h-full rounded-full ${bar}`}
-                  style={{ width: `${Math.max(v * 100, 1.5)}%` }}
-                />
-              </span>
-              <span className="w-14 shrink-0 text-end font-mono text-xs">{pct(v)}</span>
-            </li>
-          );
-        })}
-      </ul>
+    </div>
+  );
+}
+
+function Hero({ result, condition, threshold }) {
+  const photo = result.cropUrl ?? result.imageUrl;
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-5 sm:p-7">
+      <div className="flex items-center gap-5">
+        {photo && (
+          <img
+            src={photo}
+            alt="Your photo"
+            className="size-20 shrink-0 rounded-xl object-cover sm:size-24"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Most likely</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl">{condition.name}</h1>
+        </div>
+      </div>
+      <p className="mt-4 max-w-xl text-base text-muted">{condition.plain}</p>
+      <div className="mt-5 border-t border-line pt-5">
+        <ConfidenceMeter value={result.confidence} threshold={threshold} />
+      </div>
     </section>
   );
 }
 
-function EmergencyBox() {
+function RiskMix({ triage }) {
+  const parts = [
+    ["malignant", "Cancer", "bg-urgent"],
+    ["indeterminate", "Pre-cancer", "bg-prompt"],
+    ["benign", "Harmless", "bg-accent"],
+  ];
   return (
-    <div className="rounded-lg border border-urgent/30 bg-urgent-wash p-4">
-      <h3 className="mb-2 text-sm font-semibold text-urgent">
-        Get emergency help now if any of these apply
-      </h3>
-      <ul className="flex list-disc flex-col gap-1.5 ps-5">
-        {EMERGENCY.map((x) => (
-          <li key={x} className="text-sm leading-relaxed text-ink">
-            {x}
+    <div>
+      <div className="flex h-3 overflow-hidden rounded-full bg-routine-wash">
+        {parts.map(([key, , bar]) => (
+          <span key={key} className={bar} style={{ width: `${(triage[key] ?? 0) * 100}%` }} />
+        ))}
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {parts.map(([key, label, bar]) => (
+          <li key={key} className="flex items-center gap-2">
+            <span aria-hidden="true" className={`size-2.5 rounded-full ${bar}`} />
+            <span className="text-muted">{label}</span>
+            <span className="font-mono text-xs">{whole(triage[key] ?? 0)}</span>
           </li>
         ))}
       </ul>
@@ -89,47 +117,45 @@ function EmergencyBox() {
 function GroupGuidance({ group, confidence }) {
   const g = GROUPS[group];
   return (
-    <section className="rounded-xl border border-line border-s-4 border-s-accent bg-surface p-5 sm:p-6">
-      <p className="mb-2 font-mono text-xs tracking-wide text-muted">
-        WHAT KIND OF THING THIS LOOKS LIKE
-      </p>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{g.name}</h1>
-          <p className="mt-2 max-w-md text-base leading-relaxed">{g.plain}</p>
+    <>
+      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-7">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted">Looks like</p>
+        <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{g.name}</h1>
+            <p className="mt-2 max-w-md text-base text-muted">{g.plain}</p>
+          </div>
+          <p className="font-mono text-4xl font-medium tabular-nums">{whole(confidence)}</p>
         </div>
-        <div className="text-end">
-          <p className="font-mono text-3xl font-medium tabular-nums">{pct(confidence)}</p>
-          <p className="mt-1 text-xs text-muted">how sure it is</p>
+      </section>
+      <Section step="1" title="What to do next" why={g.headline}>
+        <p className="rounded-xl bg-ground p-4 text-sm">{g.seekCare}</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <More label="Get emergency help if">
+            <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-muted">
+              {EMERGENCY.map((x) => <li key={x}>{x}</li>)}
+            </ul>
+          </More>
+          <More label="What you can do now">
+            <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-muted">
+              {g.selfCare.map((x) => <li key={x}>{x}</li>)}
+            </ul>
+          </More>
         </div>
-      </div>
-      <h2 className="mb-3 mt-6 text-base font-semibold">{g.headline}</h2>
-      <EmergencyBox />
-      <div className="mt-5 rounded-lg bg-ground p-4">
-        <h3 className="mb-1.5 text-sm font-semibold">When to get it checked</h3>
-        <p className="max-w-prose text-sm leading-relaxed text-muted">{g.seekCare}</p>
-      </div>
-      <div className="mt-5 grid gap-6 sm:grid-cols-2">
-        <div>
-          <h3 className="mb-2 text-sm font-semibold">What you can do now</h3>
-          <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-muted">
-            {g.selfCare.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-2 text-sm font-semibold">See a doctor sooner if</h3>
-          <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-muted">
-            {g.redFlags.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <p className="mt-6 border-t border-line pt-4 text-xs leading-relaxed text-muted">
-        This follows a prediction that may be wrong. {DISCLAIMER}
-      </p>
+      </Section>
+    </>
+  );
+}
+
+function Notice({ tone, title, children }) {
+  const styles = {
+    prompt: "border-prompt/30 bg-prompt-wash text-prompt",
+    urgent: "border-urgent/30 bg-urgent-wash text-urgent",
+  };
+  return (
+    <section className={`rounded-2xl border p-5 sm:p-7 ${styles[tone]}`}>
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <div className="mt-2 max-w-prose text-base text-ink">{children}</div>
     </section>
   );
 }
@@ -160,136 +186,83 @@ export default function Result() {
   const isGroupAnswer = status === "answer" && kind && kind.top !== "spot_growth";
   const condition = result.predicted ? CONDITIONS[result.predicted] : null;
   const threshold = result.threshold ?? LOW_CONFIDENCE_THRESHOLD;
-  const nTypes = Object.keys(result.probabilities ?? {}).length || 8;
+  const nTypes = Object.keys(result.probabilities ?? {}).length;
+  const showSpot = status === "answer" && condition && !isGroupAnswer;
+
+  let step = 0;
+  const next = () => String((step += 1));
 
   return (
-    <Layout wide>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Link to="/dashboard" className="text-sm font-medium text-accent-dark underline">
+    <Layout>
+      <div className="mb-5">
+        <Link to="/dashboard" className="text-sm font-medium text-accent-dark hover:underline">
           ← History
         </Link>
-        <DemoBadge className="ms-auto" live={live} />
       </div>
 
-      {status === "unfamiliar" && (
-        <section className="mb-6 rounded-xl border border-prompt/30 border-s-4 border-s-prompt bg-prompt-wash p-5 sm:p-6">
-          <h1 className="text-xl font-bold tracking-tight text-prompt">
-            I don't recognise this image
-          </h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink">
-            This photo does not look like anything MEdAI was trained on, so it gives no
-            answer rather than a guess. It may be a scar, wound, rash, bite, another skin
-            condition, or a photo that is too blurred, dark or far away.
-          </p>
-          <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
-            If you are worried about it, show it to a doctor or pharmacist. A retake can help:
-            good light, the spot filling most of the frame, no flash glare.
-          </p>
-        </section>
-      )}
+      <div className="flex flex-col gap-5">
+        {status === "unfamiliar" && (
+          <Notice tone="prompt" title="I don't recognise this image">
+            It doesn't look like the skin spots MEdAI was trained on, so it won't guess. If
+            you're worried, show it to a doctor. Or retake it: good light, spot filling the frame.
+          </Notice>
+        )}
 
-      {status === "unsure" && (
-        <section className="mb-6 rounded-xl border border-urgent/30 border-s-4 border-s-urgent bg-urgent-wash p-5 sm:p-6">
-          <h1 className="text-xl font-bold tracking-tight text-urgent">
-            Not confident enough to answer — please see a doctor
-          </h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink">
-            The model's score was below the{" "}
-            <span className="font-mono">{Math.round(threshold * 100)}%</span> it needs to answer
-            {live && result.calibrated
-              ? " (a threshold chosen from validation data so that cancers are flagged or referred)"
-              : ""}
-            .
-            {condition ? (
-              <>
-                {" "}
-                Its best guess was <span className="font-medium">{condition.name}</span>, but that
-                is not reliable.
-              </>
-            ) : kind ? (
-              <>
-                {" "}
-                Its best guess was <span className="font-medium">{GROUPS[kind.top]?.name}</span>.
-              </>
-            ) : null}{" "}
-            That is not reassurance: if the spot worries you, or it has changed, have it looked
-            at.
-          </p>
-        </section>
-      )}
+        {status === "unsure" && (
+          <Notice tone="urgent" title="Not sure enough to answer">
+            The score was below the {whole(threshold)} it needs.
+            {condition && <> Best guess: <b className="font-semibold">{condition.name}</b>, but that isn't reliable.</>}{" "}
+            Not reassurance — if it worries you, see a doctor.
+          </Notice>
+        )}
 
-      {isGroupAnswer && (
-        <div className="mb-6">
-          <GroupGuidance group={kind.top} confidence={kind.confidence} />
-        </div>
-      )}
+        {isGroupAnswer && <GroupGuidance group={kind.top} confidence={kind.confidence} />}
 
-      {status === "answer" && condition && (
-        <section className="mb-6 rounded-xl border border-line bg-surface p-5 sm:p-6">
-          <p className="mb-2 font-mono text-xs tracking-wide text-muted">
-            IF THIS IS A SKIN SPOT OR GROWTH, IT LOOKS MOST LIKE
-          </p>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{condition.name}</h1>
-              <p className="mt-2 max-w-md text-base leading-relaxed">{condition.plain}</p>
-              <div className="mt-3">
-                <TriageBadge triage={condition.triage} size="sm" />
-              </div>
-            </div>
-            <div className="text-end">
-              <p className="font-mono text-3xl font-medium tabular-nums">
-                {pct(result.confidence)}
-              </p>
-              <p className="mt-1 text-xs text-muted">how sure it is</p>
-            </div>
-          </div>
-          <p className="mt-4 border-t border-line pt-4 text-xs leading-relaxed text-muted">
-            “{pct(result.confidence)} sure” means the system rated this type well ahead of the
-            other {nTypes - 1}. It does not mean there is a {pct(result.confidence)} chance you
-            have it. Scar, wound, rash or bite? This result does not apply.
-          </p>
-          <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
-            {condition.whatItIs}
-          </p>
-        </section>
-      )}
+        {showSpot && (
+          <>
+            <Hero result={result} condition={condition} threshold={threshold} />
+            <CareGuidance code={result.predicted} step={next()} />
+          </>
+        )}
 
-      <div className="flex flex-col gap-6">
         {result.imageUrl ? (
           <GradcamPanel
+            step={next()}
             imageUrl={result.imageUrl}
             focus={result.focus}
             cropUrl={result.cropUrl}
             heatUrl={result.heatUrl}
           />
         ) : (
-          <section className="rounded-xl border border-line bg-surface p-5 text-sm text-muted sm:p-6">
-            <h2 className="mb-1.5 text-base font-semibold text-ink">Visual explanation</h2>
-            This is sample history, so the original image was never stored. Run a new scan to see
-            where the model looked.
-          </section>
+          <Section title="Why it gave this answer" why="Sample history keeps no photo. Run a new scan to see the heatmap." />
         )}
 
-        {status === "answer" && result.triage && <TriageCard triage={result.triage} />}
-
-        {status === "answer" && condition && <CareGuidance code={result.predicted} />}
-
-        {result.probabilities && status !== "unfamiliar" && (
-          <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
-            <h2 className="mb-1 text-base font-semibold">What else it considered</h2>
-            <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">
-              The system scores all {nTypes} types and picks the highest. If second place is
-              close behind, that is worth paying attention to rather than ignoring.
-            </p>
-            <ProbabilityBars probabilities={result.probabilities} predicted={result.predicted} />
-          </section>
+        {result.probabilities && status !== "unfamiliar" && nTypes > 1 && (
+          <Section
+            step={next()}
+            title="How sure it is"
+            why="If second place is close, treat the answer with caution."
+          >
+            {status === "answer" && result.triage && (
+              <div className="mb-5">
+                <p className="mb-2 text-sm font-medium">Overall risk</p>
+                <RiskMix triage={result.triage} />
+              </div>
+            )}
+            <p className="mb-2 text-sm font-medium">Top matches</p>
+            <ProbabilityBars probabilities={result.probabilities} predicted={result.predicted} limit={3} />
+            {nTypes > 3 && (
+              <More label={`Show all ${nTypes} types`} className="mt-4">
+                <ProbabilityBars probabilities={result.probabilities} predicted={result.predicted} />
+              </More>
+            )}
+          </Section>
         )}
 
-        <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
-          <dl className="flex flex-wrap gap-x-8 gap-y-3 text-xs">
+        <More label="Technical details">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
             <div>
-              <dt className="text-muted">Results from</dt>
+              <dt className="text-muted">Source</dt>
               <dd className="mt-0.5 font-mono">{live ? "trained model (live)" : "simulation"}</dd>
             </div>
             <div>
@@ -302,12 +275,16 @@ export default function Result() {
                 <dd className="mt-0.5 font-mono">{kind.model}</dd>
               </div>
             )}
-            {live && (
+            <div>
+              <dt className="text-muted">Answer threshold</dt>
+              <dd className="mt-0.5 font-mono">
+                {whole(threshold)} {live ? (result.calibrated ? "(calibrated)" : "(uncalibrated)") : ""}
+              </dd>
+            </div>
+            {result.confidence != null && (
               <div>
-                <dt className="text-muted">Confidence needed to answer</dt>
-                <dd className="mt-0.5 font-mono">
-                  {Math.round(threshold * 100)}% {result.calibrated ? "(calibrated)" : "(uncalibrated)"}
-                </dd>
+                <dt className="text-muted">Exact score</dt>
+                <dd className="mt-0.5 font-mono">{pct(result.confidence)}</dd>
               </div>
             )}
             {result.inferenceMs && (
@@ -321,22 +298,21 @@ export default function Result() {
               <dd className="mt-0.5 font-mono">{result.id}</dd>
             </div>
           </dl>
-        </section>
+          <p className="mt-3 text-xs text-muted">
+            The match score ranks the {nTypes || 8} types against each other. It is not the
+            chance that you have the condition.
+          </p>
+        </More>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           to="/detect"
-          className="flex min-h-12 items-center rounded-md bg-accent px-5 font-medium text-white transition-colors hover:bg-accent-dark"
+          className="flex min-h-12 items-center rounded-lg bg-accent px-6 font-medium text-white transition-colors hover:bg-accent-dark"
         >
-          Scan another image
+          Scan another photo
         </Link>
-        <Link
-          to="/dashboard"
-          className="flex min-h-12 items-center rounded-md border border-line bg-surface px-5 font-medium transition-colors hover:bg-ground"
-        >
-          Back to history
-        </Link>
+        <p className="text-xs text-muted">{DISCLAIMER}</p>
       </div>
     </Layout>
   );

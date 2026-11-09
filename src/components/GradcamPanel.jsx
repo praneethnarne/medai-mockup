@@ -1,9 +1,9 @@
 import { useId, useState } from "react";
+import Section from "./Section.jsx";
 
-// The overlay here is an ILLUSTRATIVE stand-in: a radial gradient placed at the
-// focus point from the simulated result. The real Grad-CAM heatmap comes from
-// the model's last convolutional layer activations and class gradients, which
-// needs the trained model and the backend.
+// Without a live server the overlay is an ILLUSTRATIVE radial gradient at the
+// simulated focus point, and the caption says so. Live results carry the real
+// Grad-CAM layer and the exact square the model saw.
 function heatmapGradient({ x, y, spread }) {
   return [
     `radial-gradient(circle at ${x}% ${y}%,`,
@@ -16,47 +16,28 @@ function heatmapGradient({ x, y, spread }) {
   ].join(" ");
 }
 
-export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl }) {
-  // Live results carry the real Grad-CAM layer and the exact square the model saw.
+export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl, step }) {
   const real = Boolean(heatUrl);
   const base = real ? cropUrl : imageUrl;
   const [opacity, setOpacity] = useState(0.65);
   const sliderId = useId();
 
   return (
-    <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
-      <header className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="text-base font-semibold">Where the system was looking</h2>
-        <span className="font-mono text-xs text-muted">Grad-CAM</span>
-      </header>
-      <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">
-        The coloured patch marks the part of the photo the system based its answer
-        on. Red is where it paid most attention. If the red sits on the spot, it
-        looked at the right thing — if it sits on plain skin or on a hair, the
-        answer should not be trusted. Most systems cannot show you this at all.
-      </p>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+    <Section
+      step={step}
+      title="Why it gave this answer"
+      why="Red shows what the model looked at. Red on the spot means it looked at the right thing."
+    >
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <figure className="m-0">
-          <div className="aspect-square overflow-hidden rounded-lg border border-line bg-ground">
-            <img
-              src={base}
-              alt="Uploaded skin photo"
-              className="size-full object-cover"
-            />
+          <div className="aspect-square overflow-hidden rounded-xl bg-ground">
+            <img src={base} alt="The photo the model analysed" className="size-full object-cover" />
           </div>
-          <figcaption className="mt-2 text-xs text-muted">
-            {real ? "The square of the photo the model analysed" : "Original image"}
-          </figcaption>
+          <figcaption className="mt-2 text-xs text-muted">Your photo</figcaption>
         </figure>
-
         <figure className="m-0">
-          <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-ground">
-            <img
-              src={base}
-              alt="Uploaded skin photo with attention overlay"
-              className="size-full object-cover"
-            />
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-ground">
+            <img src={base} alt="The same photo with the attention heatmap" className="size-full object-cover" />
             {real ? (
               <img
                 src={heatUrl}
@@ -74,16 +55,14 @@ export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl }) {
             )}
           </div>
           <figcaption className="mt-2 text-xs text-muted">
-            {real
-              ? "Where it looked — Grad-CAM from the trained model"
-              : "Where it looked — illustration only, not a real heatmap"}
+            {real ? "Where it looked (Grad-CAM)" : "Illustration only — not a real heatmap"}
           </figcaption>
         </figure>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <label htmlFor={sliderId} className="text-sm font-medium">
-          Overlay strength
+      <div className="mt-4 flex items-center gap-3">
+        <label htmlFor={sliderId} className="shrink-0 text-xs text-muted">
+          Heatmap
         </label>
         <input
           id={sliderId}
@@ -93,12 +72,9 @@ export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl }) {
           step="0.05"
           value={opacity}
           onChange={(e) => setOpacity(Number(e.target.value))}
-          className="h-11 min-w-40 flex-1 accent-[#0e7c7b]"
+          className="h-11 min-w-0 flex-1 accent-[#0e7c7b]"
         />
-        <span className="w-12 text-end font-mono text-xs text-muted">
-          {Math.round(opacity * 100)}%
-        </span>
       </div>
-    </section>
+    </Section>
   );
 }
