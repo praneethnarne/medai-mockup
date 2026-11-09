@@ -16,7 +16,10 @@ function heatmapGradient({ x, y, spread }) {
   ].join(" ");
 }
 
-export default function GradcamPanel({ imageUrl, focus }) {
+export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl }) {
+  // Live results carry the real Grad-CAM layer and the exact square the model saw.
+  const real = Boolean(heatUrl);
+  const base = real ? cropUrl : imageUrl;
   const [opacity, setOpacity] = useState(0.65);
   const sliderId = useId();
 
@@ -37,29 +40,43 @@ export default function GradcamPanel({ imageUrl, focus }) {
         <figure className="m-0">
           <div className="aspect-square overflow-hidden rounded-lg border border-line bg-ground">
             <img
-              src={imageUrl}
-              alt="Uploaded skin lesion"
+              src={base}
+              alt="Uploaded skin photo"
               className="size-full object-cover"
             />
           </div>
-          <figcaption className="mt-2 text-xs text-muted">Original image</figcaption>
+          <figcaption className="mt-2 text-xs text-muted">
+            {real ? "The square of the photo the model analysed" : "Original image"}
+          </figcaption>
         </figure>
 
         <figure className="m-0">
           <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-ground">
             <img
-              src={imageUrl}
-              alt="Uploaded skin lesion with attention overlay"
+              src={base}
+              alt="Uploaded skin photo with attention overlay"
               className="size-full object-cover"
             />
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{ background: heatmapGradient(focus), opacity }}
-            />
+            {real ? (
+              <img
+                src={heatUrl}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 size-full object-cover"
+                style={{ opacity }}
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{ background: heatmapGradient(focus), opacity }}
+              />
+            )}
           </div>
           <figcaption className="mt-2 text-xs text-muted">
-            Where it looked — illustration only, not yet a real heatmap
+            {real
+              ? "Where it looked — Grad-CAM from the trained model"
+              : "Where it looked — illustration only, not a real heatmap"}
           </figcaption>
         </figure>
       </div>
