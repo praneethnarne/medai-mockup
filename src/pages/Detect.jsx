@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
-import Disclaimer from "../components/Disclaimer.jsx";
 import AnalysingState from "../components/AnalysingState.jsx";
 import { PIPELINE_STAGES } from "../lib/mockPredict.js";
 import { checkServer, runPrediction, setServerUrl } from "../lib/predict.js";
@@ -72,19 +71,22 @@ export default function Detect() {
   if (stageIndex >= 0) {
     return (
       <Layout>
-        <AnalysingState stageIndex={stageIndex} imageUrl={imageUrl} />
+        <AnalysingState stageIndex={stageIndex} imageUrl={imageUrl} live={Boolean(serverUrl)} />
       </Layout>
     );
   }
 
+  const status = {
+    ok: ["bg-accent", "Connected to the trained model"],
+    checking: ["bg-muted", "Checking the model server…"],
+    down: ["bg-urgent", "Model server not reachable"],
+    none: ["bg-prompt", "Simulation — no model server"],
+  }[serverState];
+
   return (
     <Layout>
-      <h1 className="text-2xl font-bold tracking-tight">New scan</h1>
-      <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted">
-        Upload a close, well-lit photo of one spot on the skin — a mole, a mark or a
-        patch. Magnified clinical photos work best, but any clear phone photo is fine
-        for this demo.
-      </p>
+      <h1 className="text-3xl font-bold tracking-tight">Check a skin spot</h1>
+      <p className="mt-2 text-base text-muted">One photo of one spot. Results in a few seconds.</p>
 
       <div
         onDragOver={(e) => {
@@ -97,56 +99,39 @@ export default function Detect() {
           setDragging(false);
           accept(e.dataTransfer.files?.[0]);
         }}
-        className={`mt-7 rounded-xl border-2 border-dashed p-6 transition-colors sm:p-10 ${
+        className={`mt-6 rounded-2xl border-2 border-dashed p-6 transition-colors sm:p-10 ${
           dragging ? "border-accent bg-accent-wash" : "border-line bg-surface"
         }`}
       >
         {imageUrl ? (
           <div className="flex flex-wrap items-center gap-5">
-            <div className="size-32 overflow-hidden rounded-lg border border-line bg-ground">
-              <img src={imageUrl} alt="Selected lesion" className="size-full object-cover" />
-            </div>
+            <img src={imageUrl} alt="Selected spot" className="size-28 rounded-xl object-cover" />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{file.name}</p>
-              <p className="mt-0.5 font-mono text-xs text-muted">
-                {(file.size / 1024).toFixed(0)} KB
-              </p>
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="mt-3 flex min-h-11 items-center rounded-md border border-line px-3 text-sm font-medium transition-colors hover:bg-ground"
+                className="mt-2 text-sm font-medium text-accent-dark hover:underline"
               >
-                Choose a different image
+                Choose a different photo
               </button>
             </div>
           </div>
         ) : (
-          <div className="text-center">
-            <svg
-              viewBox="0 0 24 24"
-              className="mx-auto mb-4 size-9 text-muted"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <p className="mb-4 text-sm text-muted">
-              Drag an image here, or choose a file
-            </p>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="inline-flex min-h-11 items-center rounded-md border border-line bg-surface px-4 text-sm font-medium transition-colors hover:bg-ground"
-            >
-              Choose image
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex w-full flex-col items-center gap-3 text-center"
+          >
+            <span className="flex size-14 items-center justify-center rounded-full bg-accent-wash text-accent-dark">
+              <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="M4 8h3l2-3h6l2 3h3v11H4z" strokeLinejoin="round" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+            </span>
+            <span className="text-base font-medium">Choose a photo</span>
+            <span className="text-sm text-muted">or drag it here</span>
+          </button>
         )}
 
         <input
@@ -158,65 +143,40 @@ export default function Detect() {
         />
       </div>
 
+      <ul className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-muted sm:gap-3 sm:text-sm">
+        {["Good light", "Spot fills the frame", "Sharp, no glare"].map((tip) => (
+          <li key={tip} className="flex items-center justify-center gap-1.5 rounded-lg bg-surface px-2 py-2.5">
+            <svg viewBox="0 0 16 16" className="size-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M3 8.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {tip}
+          </li>
+        ))}
+      </ul>
+
       {error && (
         <p className="mt-4 rounded-md border border-urgent/30 bg-urgent-wash px-3 py-2 text-sm text-urgent">
           {error}
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <button
-          type="button"
-          disabled={!file}
-          onClick={analyse}
-          className="flex min-h-12 items-center rounded-md bg-accent px-5 font-medium text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
-        >
-          Analyse image
-        </button>
+      <button
+        type="button"
+        disabled={!file}
+        onClick={analyse}
+        className="mt-6 flex min-h-12 w-full items-center justify-center rounded-lg bg-accent px-6 text-base font-medium text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-line disabled:text-muted sm:w-auto"
+      >
+        Analyse photo
+      </button>
 
-        {!serverUrl && (
-          <label className="flex min-h-11 items-center gap-2 text-sm text-muted">
-            <input
-              type="checkbox"
-              checked={forceLow}
-              onChange={(e) => setForceLow(e.target.checked)}
-              className="size-4 accent-[#0e7c7b]"
-            />
-            Demo: force a low-confidence result
-          </label>
-        )}
-      </div>
-
-      <section className="mt-8 rounded-xl border border-line bg-surface p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-sm font-semibold">Model server</h2>
-          <span
-            className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium ${
-              {
-                ok: "bg-accent-wash text-accent-dark",
-                checking: "bg-routine-wash text-routine",
-                down: "bg-urgent-wash text-urgent",
-                none: "bg-prompt-wash text-prompt",
-              }[serverState]
-            }`}
-          >
-            {
-              {
-                ok: "CONNECTED — real model",
-                checking: "CHECKING…",
-                down: "NOT REACHABLE",
-                none: "NONE — simulated results",
-              }[serverState]
-            }
-          </span>
-        </div>
-        <p className="mt-1.5 max-w-prose text-xs leading-relaxed text-muted">
-          Paste the address the MEdAI notebook prints (a <span className="font-mono">gradio.live</span>{" "}
-          link), or <span className="font-mono">http://127.0.0.1:7860</span> when the model runs on
-          this computer. Leave it empty to use simulated results.
-        </p>
+      <details className="group mt-10 border-t border-line pt-4">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm text-muted [&::-webkit-details-marker]:hidden">
+          <span aria-hidden="true" className={`size-2 rounded-full ${status[0]}`} />
+          {status[1]}
+          <span className="ms-auto text-xs underline">Settings</span>
+        </summary>
         <form
-          className="mt-3 flex flex-wrap gap-2"
+          className="mt-2 flex flex-wrap gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             setServerUrl(draftUrl);
@@ -229,13 +189,13 @@ export default function Detect() {
             spellCheck={false}
             value={draftUrl}
             onChange={(e) => setDraftUrl(e.target.value)}
-            placeholder="https://xxxx.gradio.live"
-            className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-ground px-3 font-mono text-sm"
+            placeholder="http://127.0.0.1:7860"
+            className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-sm"
             aria-label="Model server address"
           />
           <button
             type="submit"
-            className="min-h-11 rounded-md border border-line px-4 text-sm font-medium transition-colors hover:bg-ground"
+            className="min-h-11 rounded-md border border-line bg-surface px-4 text-sm font-medium transition-colors hover:bg-ground"
           >
             Connect
           </button>
@@ -252,9 +212,18 @@ export default function Detect() {
             </button>
           )}
         </form>
-      </section>
-
-      <Disclaimer className="mt-8" />
+        {!serverUrl && (
+          <label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              checked={forceLow}
+              onChange={(e) => setForceLow(e.target.checked)}
+              className="size-4 accent-[#0e7c7b]"
+            />
+            Simulation: force a low-confidence result
+          </label>
+        )}
+      </details>
     </Layout>
   );
 }

@@ -1,6 +1,6 @@
 import { PIPELINE_STAGES } from "../lib/mockPredict.js";
 
-export default function AnalysingState({ stageIndex, imageUrl }) {
+export default function AnalysingState({ stageIndex, imageUrl, live = false }) {
   return (
     <div className="rounded-xl border border-line bg-surface p-6 sm:p-8">
       <div className="flex flex-wrap items-start gap-6">
@@ -11,7 +11,7 @@ export default function AnalysingState({ stageIndex, imageUrl }) {
         <div className="min-w-0 flex-1">
           <h1 className="mb-1 text-lg font-semibold">Analysing image</h1>
           <p className="mb-5 text-sm text-muted">
-            Simulated for this demo — the real pipeline runs these same four stages.
+            {live ? "Running on the trained model." : "Simulation — no model server connected."}
           </p>
 
           <ol className="flex flex-col gap-3">
