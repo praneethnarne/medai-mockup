@@ -1,7 +1,7 @@
 // One result section: a numbered title, then one short line saying why it is shown.
 export default function Section({ step, title, why, children, className = "" }) {
   return (
-    <section className={`rounded-2xl border border-line bg-surface p-5 sm:p-6 ${className}`}>
+    <section className={`rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(20_24_31/0.04)] sm:p-6 ${className}`}>
       <header className="mb-4 flex items-start gap-3">
         {step && (
           <span

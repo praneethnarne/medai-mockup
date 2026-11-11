@@ -75,7 +75,9 @@ export async function checkServer(url = getServerUrl()) {
 
 /**
  * @param {File} file
- * @param {{ forceLowConfidence?: boolean }} [options]  simulation only
+ * @param {{ forceLowConfidence?: boolean, source?: "phone" | "dermatoscope" }} [options]
+ *   forceLowConfidence: simulation only. source: which trained model answers -- the
+ *   phone-photo model (/predict_json) or the dermatoscope model (/predict_json_derm).
  */
 export async function runPrediction(file, options = {}) {
   const url = getServerUrl();
@@ -84,7 +86,8 @@ export async function runPrediction(file, options = {}) {
     return { ...sim, status: sim.lowConfidence ? "unsure" : "answer", threshold: 0.6 };
   }
   const c = await client(url);
-  const res = await c.predict("/predict_json", [file]);
+  const endpoint = options.source === "dermatoscope" ? "/predict_json_derm" : "/predict_json";
+  const res = await c.predict(endpoint, [file]);
   const data = res?.data?.[0];
   if (!data || data.error) throw new Error(data?.error ?? "The model server returned nothing.");
   return { ...data, createdAt: new Date().toISOString(), server: url };

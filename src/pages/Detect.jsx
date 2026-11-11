@@ -7,18 +7,24 @@ import { checkServer, runPrediction, setServerUrl } from "../lib/predict.js";
 import useServerUrl from "../lib/useLive.js";
 import { saveScan } from "../lib/history.js";
 
+const DEFAULT_SERVER = "http://127.0.0.1:7860";
+
 export default function Detect() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
+  const settingsRef = useRef(null);
+  const urlInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [stageIndex, setStageIndex] = useState(-1);
   const [forceLow, setForceLow] = useState(false);
+  const [source, setSource] = useState("phone");
   const [error, setError] = useState(null);
   const serverUrl = useServerUrl();
-  const [draftUrl, setDraftUrl] = useState(serverUrl);
+  const [draftUrl, setDraftUrl] = useState(serverUrl || DEFAULT_SERVER);
   const [serverState, setServerState] = useState(serverUrl ? "checking" : "none");
+  const [settingsOpen, setSettingsOpen] = useState(!serverUrl);
 
   useEffect(() => {
     let alive = true;
@@ -32,6 +38,19 @@ export default function Detect() {
       alive = false;
     };
   }, [serverUrl]);
+
+  useEffect(() => {
+    if (!serverUrl) setDraftUrl((u) => u || DEFAULT_SERVER);
+  }, [serverUrl]);
+
+  function openSettings() {
+    setSettingsOpen(true);
+    setDraftUrl((u) => u || DEFAULT_SERVER);
+    requestAnimationFrame(() => {
+      settingsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      urlInputRef.current?.focus();
+    });
+  }
 
   function accept(next) {
     if (!next) return;
@@ -48,7 +67,7 @@ export default function Detect() {
     if (!file) return;
     setError(null);
     // The real request runs while the stages play; the last stage waits for it.
-    const request = runPrediction(file, { forceLowConfidence: forceLow });
+    const request = runPrediction(file, { forceLowConfidence: forceLow, source });
     request.catch(() => {});
     for (let i = 0; i < PIPELINE_STAGES.length; i += 1) {
       setStageIndex(i);
@@ -65,6 +84,7 @@ export default function Detect() {
         `The model server did not answer (${e?.message ?? "unknown error"}). Check the ` +
           "server address below, or clear it to use the simulation.",
       );
+      openSettings();
     }
   }
 
@@ -83,10 +103,51 @@ export default function Detect() {
     none: ["bg-prompt", "Simulation — no model server"],
   }[serverState];
 
+  const needsBanner = serverState === "none" || serverState === "down";
+
   return (
     <Layout>
       <h1 className="text-3xl font-bold tracking-tight">Check a skin spot</h1>
       <p className="mt-2 text-base text-muted">One photo of one spot. Results in a few seconds.</p>
+
+      {needsBanner && (
+        <div
+          className={`mt-5 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${
+            serverState === "down"
+              ? "border-urgent/30 bg-urgent-wash text-urgent"
+              : "border-prompt/30 bg-prompt-wash text-prompt"
+          }`}
+          role="status"
+        >
+          <p className="min-w-0 flex-1 text-sm text-ink">
+            {serverState === "down" ? (
+              <>
+                <span className="font-semibold text-urgent">Model server not reachable.</span>{" "}
+                Check the address, or continue in simulation.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-prompt">Simulation mode</span> — results are
+                not from the trained model.
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={openSettings}
+            className="flex min-h-11 shrink-0 items-center rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-dark"
+          >
+            Connect model
+          </button>
+        </div>
+      )}
+
+      {serverState === "ok" && (
+        <p className="mt-4 flex items-center gap-2 text-sm text-accent-dark" role="status">
+          <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+          Connected to the trained model
+        </p>
+      )}
 
       <div
         onDragOver={(e) => {
@@ -154,6 +215,34 @@ export default function Detect() {
         ))}
       </ul>
 
+      <fieldset className="mt-6">
+        <legend className="mb-2 text-sm font-medium">What kind of photo is it?</legend>
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1 ring-1 ring-line">
+          {[
+            ["phone", "Phone photo", "Taken with a normal camera"],
+            ["dermatoscope", "Dermatoscope image", "Taken through a clinic skin magnifier"],
+          ].map(([value, label, hint]) => (
+            <label
+              key={value}
+              className={`flex cursor-pointer flex-col rounded-lg px-3 py-2.5 text-center transition-colors ${
+                source === value ? "bg-accent-wash text-accent-dark ring-1 ring-accent/40" : "text-muted hover:bg-ground"
+              }`}
+            >
+              <input
+                type="radio"
+                name="source"
+                value={value}
+                checked={source === value}
+                onChange={() => setSource(value)}
+                className="sr-only"
+              />
+              <span className="text-sm font-semibold">{label}</span>
+              <span className="text-xs">{hint}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       {error && (
         <p className="mt-4 rounded-md border border-urgent/30 bg-urgent-wash px-3 py-2 text-sm text-urgent">
           {error}
@@ -169,8 +258,16 @@ export default function Detect() {
         Analyse photo
       </button>
 
-      <details className="group mt-10 border-t border-line pt-4">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm text-muted [&::-webkit-details-marker]:hidden">
+      <details
+        ref={settingsRef}
+        className="group mt-10 border-t border-line pt-4"
+        open={settingsOpen}
+        onToggle={(e) => setSettingsOpen(e.currentTarget.open)}
+      >
+        <summary
+          className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm text-muted [&::-webkit-details-marker]:hidden"
+          aria-label={`${status[1]}. Open model server settings`}
+        >
           <span aria-hidden="true" className={`size-2 rounded-full ${status[0]}`} />
           {status[1]}
           <span className="ms-auto text-xs underline">Settings</span>
@@ -179,17 +276,18 @@ export default function Detect() {
           className="mt-2 flex flex-wrap gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            setServerUrl(draftUrl);
+            setServerUrl(draftUrl.trim() || DEFAULT_SERVER);
           }}
         >
           <input
+            ref={urlInputRef}
             type="text"
             inputMode="url"
             autoCapitalize="off"
             spellCheck={false}
             value={draftUrl}
             onChange={(e) => setDraftUrl(e.target.value)}
-            placeholder="http://127.0.0.1:7860"
+            placeholder={DEFAULT_SERVER}
             className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-mono text-sm"
             aria-label="Model server address"
           />
@@ -203,8 +301,9 @@ export default function Detect() {
             <button
               type="button"
               onClick={() => {
-                setDraftUrl("");
+                setDraftUrl(DEFAULT_SERVER);
                 setServerUrl("");
+                setSettingsOpen(true);
               }}
               className="min-h-11 rounded-md px-3 text-sm text-muted underline"
             >
@@ -218,7 +317,7 @@ export default function Detect() {
               type="checkbox"
               checked={forceLow}
               onChange={(e) => setForceLow(e.target.checked)}
-              className="size-4 accent-[#0e7c7b]"
+              className="size-4 accent-[#0f766e]"
             />
             Simulation: force a low-confidence result
           </label>

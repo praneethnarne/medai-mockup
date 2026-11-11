@@ -70,6 +70,8 @@ export function saveScan(result) {
       kind: result.kind?.top ?? null,
       createdAt: result.createdAt,
       region: "This session",
+      simulated: result.simulated !== false,
+      seeded: false,
     };
     sessionStorage.setItem(
       KEY,

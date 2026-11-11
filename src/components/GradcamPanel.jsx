@@ -72,7 +72,7 @@ export default function GradcamPanel({ imageUrl, focus, cropUrl, heatUrl, step }
           step="0.05"
           value={opacity}
           onChange={(e) => setOpacity(Number(e.target.value))}
-          className="h-11 min-w-0 flex-1 accent-[#0e7c7b]"
+          className="h-11 min-w-0 flex-1 accent-[#0f766e]"
         />
       </div>
     </Section>
