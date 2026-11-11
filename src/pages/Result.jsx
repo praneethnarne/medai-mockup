@@ -37,18 +37,27 @@ function statusOf(r) {
 
 // The score as a bar, with a tick where the model's answer threshold sits:
 // shows at a glance why it answered (or did not) without a paragraph.
-function ConfidenceMeter({ value, threshold }) {
-  const passed = value >= threshold;
+// The model answers when it is sure enough of the RISK GROUP (cancer / pre-cancer /
+// harmless), not of the single type -- that is how the threshold was calibrated. So the
+// bar and the pass mark show the risk-group score; the type's own score sits beside it.
+function ConfidenceMeter({ value, groupValue, threshold }) {
+  const bar = groupValue ?? value;
+  const passed = bar >= threshold;
   return (
     <div className="w-full">
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono text-3xl font-medium tabular-nums">{whole(value)}</span>
-        <span className="text-sm text-muted">match score</span>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className="font-mono text-3xl font-medium tabular-nums">{whole(bar)}</span>
+        <span className="text-sm text-muted">
+          {groupValue != null ? "sure of the risk group" : "match score"}
+        </span>
+        {groupValue != null && (
+          <span className="ms-auto text-xs text-muted">this exact type: {whole(value)}</span>
+        )}
       </div>
       <div className="relative mt-2 h-2.5 rounded-full bg-routine-wash">
         <span
           className={`absolute inset-y-0 left-0 rounded-full ${passed ? "bg-accent" : "bg-urgent"}`}
-          style={{ width: `${Math.max(value * 100, 2)}%` }}
+          style={{ width: `${Math.max(bar * 100, 2)}%` }}
         />
         <span
           aria-hidden="true"
@@ -66,7 +75,7 @@ function ConfidenceMeter({ value, threshold }) {
 function Hero({ result, condition, threshold }) {
   const photo = result.cropUrl ?? result.imageUrl;
   return (
-    <section className="rounded-2xl border border-line bg-surface p-5 sm:p-7">
+    <section className="result-hero rounded-2xl border border-line bg-surface p-5 sm:p-7">
       <div className="flex items-center gap-5">
         {photo && (
           <img
@@ -82,7 +91,11 @@ function Hero({ result, condition, threshold }) {
       </div>
       <p className="mt-4 max-w-xl text-base text-muted">{condition.plain}</p>
       <div className="mt-5 border-t border-line pt-5">
-        <ConfidenceMeter value={result.confidence} threshold={threshold} />
+        <ConfidenceMeter
+          value={result.confidence}
+          groupValue={result.triage ? Math.max(...Object.values(result.triage)) : null}
+          threshold={threshold}
+        />
       </div>
     </section>
   );
@@ -200,11 +213,13 @@ export default function Result() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {status === "unfamiliar" && (
           <Notice tone="prompt" title="I don't recognise this image">
-            It doesn't look like the skin spots MEdAI was trained on, so it won't guess. If
-            you're worried, show it to a doctor. Or retake it: good light, spot filling the frame.
+            It doesn't look like the skin spots MEdAI was trained on, so it won't treat this as a
+            reliable answer.
+            {condition && <> Closest match: <b className="font-semibold">{condition.name}</b>.</>}{" "}
+            If you're worried, show it to a doctor. Or retake it: good light, spot filling the frame.
           </Notice>
         )}
 
@@ -225,7 +240,11 @@ export default function Result() {
           </>
         )}
 
-        {result.imageUrl ? (
+        {!showSpot && condition && status !== "answer" && !isGroupAnswer && (
+          <Hero result={result} condition={condition} threshold={threshold} />
+        )}
+
+        {result.imageUrl || result.cropUrl || result.heatUrl ? (
           <GradcamPanel
             step={next()}
             imageUrl={result.imageUrl}
@@ -237,7 +256,7 @@ export default function Result() {
           <Section title="Why it gave this answer" why="Sample history keeps no photo. Run a new scan to see the heatmap." />
         )}
 
-        {result.probabilities && status !== "unfamiliar" && nTypes > 1 && (
+        {result.probabilities && nTypes > 1 && (
           <Section
             step={next()}
             title="How sure it is"
@@ -298,10 +317,12 @@ export default function Result() {
               <dd className="mt-0.5 font-mono">{result.id}</dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-muted">
-            The match score ranks the {nTypes || 8} types against each other. It is not the
-            chance that you have the condition.
-          </p>
+          {nTypes > 1 && (
+            <p className="mt-3 text-xs text-muted">
+              The match score ranks the {nTypes} types against each other. It is not the
+              chance that you have the condition.
+            </p>
+          )}
         </More>
       </div>
 

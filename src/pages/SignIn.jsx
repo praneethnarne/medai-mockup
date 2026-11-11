@@ -53,7 +53,7 @@ export default function SignIn() {
           type="submit"
           className="mt-1 flex min-h-12 items-center justify-center rounded-md bg-accent px-4 font-medium text-white transition-colors hover:bg-accent-dark"
         >
-          Continue
+          Continue to history
         </button>
       </form>
     </AuthShell>

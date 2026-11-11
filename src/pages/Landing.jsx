@@ -54,36 +54,59 @@ export default function Landing() {
         <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
           <Logo />
           <div className="ms-auto flex items-center gap-2">
-            <DemoBadge className="hidden sm:inline-flex" />
+            <DemoBadge compact />
             <Link
               to="/signin"
               className="flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted hover:bg-ground hover:text-ink"
             >
-              Sign in
+              Demo sign-in
             </Link>
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        <section className="mx-auto w-full max-w-5xl px-4 pb-14 pt-14 sm:px-6 sm:pt-20">
-          <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
-            Worried about a spot on your skin?
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-muted">
-            Take a photo. MEdAI tells you what it most likely is, shows why, and what to do next.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              to="/detect"
-              className="flex min-h-12 items-center rounded-lg bg-accent px-6 text-base font-medium text-white transition-colors hover:bg-accent-dark"
-            >
-              Check a spot
-            </Link>
-            <Link to="/dashboard" className="text-sm font-medium text-accent-dark hover:underline">
-              View past scans
-            </Link>
+        <section className="landing-hero mx-auto grid w-full max-w-5xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pt-20 md:grid-cols-[1.15fr_1fr]">
+          <div>
+            <p className="text-4xl font-extrabold tracking-tight text-accent sm:text-5xl">MEdAI</p>
+            <h1 className="mt-4 text-3xl font-extrabold leading-[1.1] sm:text-5xl">
+              Worried about a spot on your skin?
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-muted">
+              Take a photo. MEdAI tells you what it most likely is, shows why, and what to do next.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Link
+                to="/detect"
+                className="flex min-h-12 items-center rounded-full bg-accent px-7 text-base font-semibold text-white shadow-[0_8px_20px_-8px_rgb(15_118_110/0.6)] hover:bg-accent-dark"
+              >
+                Check a spot
+              </Link>
+              <Link to="/dashboard" className="text-sm font-medium text-accent-dark hover:underline">
+                View past scans
+              </Link>
+            </div>
           </div>
+
+          <figure className="m-0" aria-label="Example result">
+            <div className="relative rounded-3xl border border-line bg-surface p-5 shadow-[0_24px_60px_-30px_rgb(20_24_31/0.35)]">
+              <div className="flex items-center gap-4">
+                <img src="/samples/arm_nevus.jpg" alt="" className="size-16 rounded-xl object-cover" />
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Most likely</p>
+                  <p className="text-xl font-bold">Ordinary mole</p>
+                </div>
+              </div>
+              <div className="mt-4 h-2 rounded-full bg-routine-wash">
+                <span className="block h-full w-[92%] rounded-full bg-accent" />
+              </div>
+              <div className="mt-4 rounded-xl bg-routine-wash px-4 py-3 text-sm">
+                <span className="font-semibold">Monitor it</span>
+                <span className="text-muted"> · mention at your next visit</span>
+              </div>
+            </div>
+            <figcaption className="mt-3 text-center text-xs text-muted">Example result (illustration)</figcaption>
+          </figure>
         </section>
 
         <section className="border-y border-line bg-surface">

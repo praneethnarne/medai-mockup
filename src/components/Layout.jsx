@@ -3,15 +3,12 @@ import Logo from "./Logo.jsx";
 import DemoBadge from "./DemoBadge.jsx";
 import FooterNote from "./FooterNote.jsx";
 
-const navItems = [
-  { to: "/dashboard", label: "History" },
-  { to: "/detect", label: "New scan" },
-];
+const navItems = [{ to: "/dashboard", label: "History" }];
 
 export default function Layout({ children, wide = false }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line bg-surface">
+      <header className="sticky top-0 z-10 border-b border-line bg-surface/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
           <Link to="/" className="shrink-0 rounded-sm">
             <Logo />
@@ -33,8 +30,14 @@ export default function Layout({ children, wide = false }) {
               </NavLink>
             ))}
           </nav>
-          <div className="ms-auto">
-            <DemoBadge />
+          <div className="ms-auto flex items-center gap-3">
+            <DemoBadge compact />
+            <Link
+              to="/detect"
+              className="flex min-h-10 items-center rounded-full bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-dark"
+            >
+              New scan
+            </Link>
           </div>
         </div>
       </header>
